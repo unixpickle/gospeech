@@ -35,21 +35,21 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Download the IPA versions
-	res := downloadIPA(words)
+	// Download the MW versions
+	res := downloadMW(words)
 	keys := make([]string, 0, len(res))
 	for word, _ := range res {
 		keys = append(keys, word)
 	}
 	sort.Strings(keys)
 
-	// Write the sorted IPA versions
+	// Write the sorted MW versions
 	for _, word := range keys {
 		output.Write([]byte(word + "|" + res[word] + "\n"))
 	}
 }
 
-func downloadIPA(words []string) map[string]string {
+func downloadMW(words []string) map[string]string {
 	res := map[string]string{}
 	var numErrors int32
 	lock := sync.Mutex{}
@@ -64,10 +64,10 @@ func downloadIPA(words []string) map[string]string {
 				if !ok {
 					return
 				}
-				ipa, err := findIPA(word)
+				mw, err := findMW(word)
 				if err == nil {
 					lock.Lock()
-					res[word] = ipa
+					res[word] = mw
 					lock.Unlock()
 				} else {
 					atomic.AddInt32(&numErrors, 1)
@@ -89,7 +89,7 @@ func downloadIPA(words []string) map[string]string {
 	return res
 }
 
-func findIPA(word string) (string, error) {
+func findMW(word string) (string, error) {
 	url := "http://www.merriam-webster.com/dictionary/" + word
 	resp, err := http.Get(url)
 	if err != nil {
