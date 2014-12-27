@@ -76,7 +76,7 @@ func downloadIPA(words []string) map[string]string {
 		}()
 	}
 	for i, word := range words {
-		if i%1000 == 0 {
+		if i%500 == 0 {
 			errs := atomic.LoadInt32(&numErrors)
 			fmt.Println("Did", i, "words and", errs, "errors")
 		}
