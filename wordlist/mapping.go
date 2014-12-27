@@ -32,7 +32,7 @@ func (m Mapping) Write(w io.Writer) error {
 	}
 	sort.Strings(keys)
 	for _, key := range keys {
-		_, err := w.Write([]byte(key + "|" + m[key]))
+		_, err := w.Write([]byte(key + "|" + m[key] + "\n"))
 		if err != nil {
 			return err
 		}
