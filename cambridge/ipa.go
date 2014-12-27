@@ -17,14 +17,15 @@ func FindFullIPA(word string) (string, error) {
 		return ipa, nil
 	}
 	if !strings.HasPrefix(word, realWord) {
-		return ipa, nil
+		return "", errors.New("Word redirects.")
 	}
 	suffix := word[len(realWord):]
-	suffixes := map[string]string{"s": "s"}
+	suffixes := map[string]string{"ing": "ɪŋ", "s": "s", "er": "ɜr",
+		"ers": "ɜrs", "ly": "lē", "ed": "t", "es": "əz"}
 	if ending, ok := suffixes[suffix]; ok {
 		return ipa + ending, nil
 	}
-	return ipa, nil
+	return "", errors.New("Word redirects.")
 }
 
 func FindIPA(word string) (string, string, error) {
@@ -63,7 +64,7 @@ func findTag(body, open, close string) (string, error) {
 	}
 	m := r.FindStringSubmatch(body)
 	if m == nil {
-		return "", errors.New("Not found: " + e)
+		return "", errors.New("Not found.")
 	}
 	return m[1], nil
 }
