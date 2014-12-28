@@ -3,7 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/unixpickle/gospeech/cambridge"
+	"github.com/unixpickle/gospeech/dictionary"
 	"github.com/unixpickle/gospeech/wordlist"
 	"os"
 	"sync"
