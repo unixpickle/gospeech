@@ -8,9 +8,9 @@ import (
 	"strings"
 )
 
-type Sounds map[string]wav.Sound
+type Voice map[string]wav.Sound
 
-func ReadSounds(dirPath string) (Sounds, error) {
+func LoadVoice(dirPath string) (Voice, error) {
 	// Read the directory
 	f, err := os.Open(dirPath)
 	if err != nil {
@@ -23,7 +23,7 @@ func ReadSounds(dirPath string) (Sounds, error) {
 	}
 
 	// Load all WAV files
-	res := Sounds{}
+	res := Voice{}
 	for _, name := range names {
 		if !strings.HasSuffix(name, ".wav") {
 			continue
@@ -55,6 +55,6 @@ func ReadSounds(dirPath string) (Sounds, error) {
 	return res, nil
 }
 
-func (s Sounds) Get(p *Phoneme) wav.Sound {
+func (s Voice) Get(p *Phoneme) wav.Sound {
 	return s[p.String()]
 }

@@ -1,6 +1,7 @@
 package gospeech
 
 import (
+	"errors"
 	"strconv"
 	"strings"
 )
@@ -10,6 +11,7 @@ const (
 	TypeAspirate  = iota
 	TypeFricative = iota
 	TypeLiquid    = iota
+	TypeNasal     = iota
 	TypeSemivowel = iota
 	TypeStop      = iota
 	TypeVowel     = iota
@@ -30,6 +32,7 @@ func AllPhonemes() []*Phoneme {
 		TypeAspirate:  "HH",
 		TypeLiquid:    "L R",
 		TypeSemivowel: "W Y",
+		TypeNasal:     "M N NG",
 	}
 	res := make([]*Phoneme, 0)
 	for t, v := range lists {
@@ -61,6 +64,7 @@ func ParsePhoneme(ph string) (*Phoneme, error) {
 		"F": TypeFricative, "S": TypeFricative, "SH": TypeFricative,
 		"TH": TypeFricative, "V": TypeFricative, "Z": TypeFricative,
 		"ZH": TypeFricative, "HH": TypeAspirate, "L": TypeLiquid,
+		"M": TypeNasal, "N": TypeNasal, "NG": TypeNasal,
 	}
 	emphasis := -1
 	if strings.HasSuffix(ph, "0") || strings.HasSuffix(ph, "1") ||
@@ -70,7 +74,7 @@ func ParsePhoneme(ph string) (*Phoneme, error) {
 	}
 	theType, ok := types[ph]
 	if !ok {
-		return nil, ErrInvalidPhoneme
+		return nil, errors.New("Invalid phoneme: " + ph)
 	}
 	return &Phoneme{emphasis, ph, theType}, nil
 }

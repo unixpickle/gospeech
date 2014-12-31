@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func SynthesizeWord(word string, d *Dictionary, s *Sounds) wav.Sound {
+func SynthesizeWord(word string, d Dictionary, v Voice) wav.Sound {
 	phonemes := d.Get(word)
 	
 	// If the word is not in the dictionary, return a second-long bleep sound.
@@ -24,21 +24,21 @@ func SynthesizeWord(word string, d *Dictionary, s *Sounds) wav.Sound {
 	}
 	
 	// TODO: use some fancy overlay/merging stuff here
-	sound := s.Get(phonemes[0]).Clone()
+	sound := v.Get(phonemes[0]).Clone()
 	for _, aSound := range phonemes[1:] {
-		wav.Append(sound, s.Get(aSound))
+		wav.Append(sound, v.Get(aSound))
 	}
 	
 	return sound
 }
 
-func SynthesizeSentence(sentence string, d *Dictionary, s *Sounds) wav.Sound {
+func SynthesizeSentence(sentence string, d Dictionary, v Voice) wav.Sound {
 	res := wav.NewPCM16Sound(2, 44100)
 	for i, word := range strings.Split(sentence, " ") {
 		if i != 0 {
 			wav.AppendSilence(res, time.Second / 2)
 		}
-		wav.Append(res, SynthesizeWord(word, d, s))
+		wav.Append(res, SynthesizeWord(word, d, v))
 	}
 	return res
 }

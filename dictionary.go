@@ -6,9 +6,9 @@ import (
 	"strings"
 )
 
-type Dictionary map[string][]*Phoneme
+type Dictionary map[string]string
 
-func ReadDictionary(path string) (Dictionary, error) {
+func LoadDictionary(path string) (Dictionary, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -32,17 +32,22 @@ func ReadDictionary(path string) (Dictionary, error) {
 			continue
 		}
 		word := line[0:idx]
-		phonemes, err := parsePhonemes(line[idx+2:])
-		if err != nil {
-			return nil, err
+		phonetics := line[idx+2:]
+		for strings.HasPrefix(phonetics, " ") {
+			phonetics = phonetics[1:]
 		}
-		res[word] = phonemes
+		res[word] = phonetics
 	}
 	return res, nil
 }
 
 func (d Dictionary) Get(word string) []*Phoneme {
-	return d[strings.ToUpper(word)]
+	str, ok := d[strings.ToUpper(word)]
+	if !ok {
+		return nil
+	}
+	res, _ := parsePhonemes(str)
+	return res
 }
 
 func parsePhonemes(raw string) ([]*Phoneme, error) {
