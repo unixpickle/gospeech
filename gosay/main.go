@@ -30,7 +30,8 @@ func ErrMain() error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("Synthesizing")
+	fmt.Println("Synthesizing...")
 	output := gospeech.SynthesizeSentence(os.Args[3], dict, voice)
+	fmt.Println("Saving...")
 	return wav.WriteFile(output, os.Args[4])
 }
