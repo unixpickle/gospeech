@@ -46,19 +46,18 @@ func (d Dictionary) Get(word string) []*Phoneme {
 	if !ok {
 		return nil
 	}
-	res, _ := parsePhonemes(str)
-	return res
+	return parsePhonemes(str)
 }
 
-func parsePhonemes(raw string) ([]*Phoneme, error) {
+func parsePhonemes(raw string) []*Phoneme {
 	parts := strings.Split(raw, " ")
 	res := make([]*Phoneme, len(parts))
 	for i, part := range parts {
 		var err error
 		res[i], err = ParsePhoneme(part)
 		if err != nil {
-			return nil, err
+			return nil
 		}
 	}
-	return res, nil
+	return res
 }
