@@ -17,13 +17,13 @@ const (
 	TypeVowel     = iota
 )
 
-type Phoneme struct {
+type Phone struct {
 	Emphasis int
-	Letters  string
+	Name     string
 	Type     int
 }
 
-func AllPhonemes() []*Phoneme {
+func AllPhones() []*Phone {
 	lists := map[int]string{
 		TypeStop:      "B D G K P T",
 		TypeVowel:     "AA AE AH AO AW AY EH ER EY IH IY OW OY UH UW",
@@ -34,15 +34,15 @@ func AllPhonemes() []*Phoneme {
 		TypeSemivowel: "W Y",
 		TypeNasal:     "M N NG",
 	}
-	res := make([]*Phoneme, 0)
+	res := make([]*Phone, 0)
 	for t, v := range lists {
 		list := strings.Split(v, " ")
 		for _, s := range list {
-			res = append(res, &Phoneme{-1, s, t})
+			res = append(res, &Phone{-1, s, t})
 			if t == TypeVowel {
-				// Append phonemes with the 3 emphases
+				// Append phones with the 3 emphases
 				for i := 0; i < 3; i++ {
-					res = append(res, &Phoneme{i, s, t})
+					res = append(res, &Phone{i, s, t})
 				}
 			}
 		}
@@ -50,7 +50,7 @@ func AllPhonemes() []*Phoneme {
 	return res
 }
 
-func ParsePhoneme(ph string) (*Phoneme, error) {
+func ParsePhone(ph string) (*Phone, error) {
 	types := map[string]int{
 		"R": TypeLiquid, "W": TypeSemivowel, "Y": TypeSemivowel,
 		"B": TypeStop, "D": TypeStop, "G": TypeStop,
@@ -76,12 +76,12 @@ func ParsePhoneme(ph string) (*Phoneme, error) {
 	if !ok {
 		return nil, errors.New("Invalid phoneme: " + ph)
 	}
-	return &Phoneme{emphasis, ph, theType}, nil
+	return &Phone{emphasis, ph, theType}, nil
 }
 
-func (p *Phoneme) String() string {
+func (p *Phone) String() string {
 	if p.Emphasis < 0 {
-		return p.Letters
+		return p.Name
 	}
-	return p.Letters + strconv.Itoa(p.Emphasis)
+	return p.Name + strconv.Itoa(p.Emphasis)
 }

@@ -41,20 +41,20 @@ func LoadDictionary(path string) (Dictionary, error) {
 	return res, nil
 }
 
-func (d Dictionary) Get(word string) []*Phoneme {
+func (d Dictionary) Get(word string) []*Phone {
 	str, ok := d[strings.ToUpper(word)]
 	if !ok {
 		return nil
 	}
-	return parsePhonemes(str)
+	return parsePhones(str)
 }
 
-func parsePhonemes(raw string) []*Phoneme {
+func parsePhones(raw string) []*Phone {
 	parts := strings.Split(raw, " ")
-	res := make([]*Phoneme, len(parts))
+	res := make([]*Phone, len(parts))
 	for i, part := range parts {
 		var err error
-		res[i], err = ParsePhoneme(part)
+		res[i], err = ParsePhone(part)
 		if err != nil {
 			return nil
 		}
