@@ -19,7 +19,7 @@ func main() {
 
 func ErrMain() error {
 	if len(os.Args) != 3 {
-		return errors.New("Usage: startstops <dictionary.txt> <common.txt>")
+		return errors.New("Usage: edgephones <dictionary.txt> <common.txt>")
 	}
 	
 	// Read input files
@@ -38,7 +38,7 @@ func ErrMain() error {
 	dictKeys := SortDictionary(dict, common)
 	
 	// Generate keys and values
-	fmt.Println("Generating starts and stops...")
+	fmt.Println("Generating edge phones...")
 	result := map[string][]string{}
 	for _, word := range dictKeys {
 		phones := dict.Get(word)
@@ -53,7 +53,7 @@ func ErrMain() error {
 			if list, ok := result[key]; !ok {
 				result[key] = []string{word}
 			} else if len(list) < 10 {
-				result[key] = append(result[prefixPhone], word)
+				result[key] = append(result[key], word)
 			}
 		}
 	}
