@@ -2,6 +2,7 @@ package gospeech
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/unixpickle/wav"
 	"io/ioutil"
 	"os"
@@ -31,13 +32,15 @@ func LoadVoice(path string) (Voice, error) {
 
 	// Parse cuts.json
 	var cuts map[string]fileCut
-	if err := json.Unmarshal(content, cuts); err != nil {
+	if err := json.Unmarshal(content, &cuts); err != nil {
 		return res, nil
 	}
+
+	// Apply the cuts
 	for name, cut := range cuts {
 		if sound, ok := res[name]; ok {
-			start := time.Duration(float64(time.Second) * cut.start)
-			end := time.Duration(float64(time.Second) * cut.end)
+			start := time.Duration(float64(time.Second) * cut.Start)
+			end := time.Duration(float64(time.Second) * cut.End)
 			wav.Crop(sound, start, end)
 		}
 	}
@@ -71,10 +74,19 @@ func loadRawVoice(path string) (Voice, error) {
 		res[baseName] = sound
 	}
 
+	// Ensure that the voice has every edge phone.
+	for _, phone := range AllPhones() {
+		for _, entry := range []string{"-" + phone.Name, phone.Name + "-"} {
+			if _, ok := res[entry]; !ok {
+				return nil, errors.New("Missing edge phone: " + entry)
+			}
+		}
+	}
+
 	return res, nil
 }
 
 type fileCut struct {
-	start float64
-	end   float64
+	Start float64 `json:"start"`
+	End   float64 `json:"end"`
 }
