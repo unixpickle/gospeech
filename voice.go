@@ -11,8 +11,10 @@ import (
 	"time"
 )
 
+// Voice maps edge phones and diphones to sounds.
 type Voice map[string]wav.Sound
 
+// LoadVoice loads a voice from a directory.
 func LoadVoice(path string) (Voice, error) {
 	res, err := loadRawVoice(path)
 	if err != nil {

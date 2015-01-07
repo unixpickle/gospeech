@@ -2,6 +2,8 @@ package gospeech
 
 import "github.com/unixpickle/wav"
 
+// SynthesizePhones uses the sounds in a voice to synthesize speech for a given
+// word.
 func SynthesizePhones(phones []Phone, v Voice) wav.Sound {
 	res := wav.NewPCM8Sound(1, 44100)
 	if len(phones) == 0 {

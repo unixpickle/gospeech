@@ -6,8 +6,11 @@ import (
 	"strings"
 )
 
+// Dictionary is a phonetic dictionary which maps words to corresponding
+// pronunciations.
 type Dictionary map[string][]Phone
 
+// LoadDictionary reads a dictionary file and returns it.
 func LoadDictionary(path string) (Dictionary, error) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -38,13 +41,15 @@ func LoadDictionary(path string) (Dictionary, error) {
 		// Parse the entry
 		word := line[0:idx]
 		rawPhones := strings.TrimLeft(line[idx+2:], " ")
-		if parsed := parsePhones(rawPhones); parsed != nil {
+		if parsed, err := ParsePhones(rawPhones); err == nil {
 			res[word] = parsed
 		}
 	}
 	return res, nil
 }
 
+// Get returns the phonetic pronunciation (or nil) for a given word.
+// The case of the word does not matter.
 func (d Dictionary) Get(word string) []Phone {
 	if res, ok := d[strings.ToUpper(word)]; ok {
 		return res
@@ -53,6 +58,9 @@ func (d Dictionary) Get(word string) []Phone {
 	}
 }
 
+// GetRaw returns the phonetic string representation of a word.
+// This is equivalent to calling Get() and joining the resultant phones with
+// spaces.
 func (d Dictionary) GetRaw(word string) string {
 	res := ""
 	phones := d.Get(word)
@@ -64,18 +72,6 @@ func (d Dictionary) GetRaw(word string) string {
 			res += " "
 		}
 		res += ph.String()
-	}
-	return res
-}
-
-func parsePhones(raw string) []Phone {
-	comps := strings.Split(raw, " ")
-	res := make([]Phone, len(comps))
-	for i, comp := range comps {
-		res[i] = Phone(comp)
-		if !res[i].Valid() {
-			return nil
-		}
 	}
 	return res
 }
