@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-type Dictionary map[string]string
+type Dictionary map[string][]Phone
 
 func LoadDictionary(path string) (Dictionary, error) {
 	f, err := os.Open(path)
@@ -19,11 +19,14 @@ func LoadDictionary(path string) (Dictionary, error) {
 	// Read each line and add it to the dictionary
 	res := Dictionary{}
 	for {
+		// Read the line
 		rawLine, _, err := b.ReadLine()
 		if err != nil {
 			break
 		}
 		line := string(rawLine)
+
+		// Ignore comments or lines without proper separators
 		if strings.HasPrefix(line, ";;;") {
 			continue
 		}
@@ -31,31 +34,46 @@ func LoadDictionary(path string) (Dictionary, error) {
 		if idx < 0 {
 			continue
 		}
+
+		// Parse the entry
 		word := line[0:idx]
-		phonetics := line[idx+2:]
-		for strings.HasPrefix(phonetics, " ") {
-			phonetics = phonetics[1:]
+		rawPhones := strings.TrimLeft(line[idx+2:], " ")
+		if parsed := parsePhones(rawPhones); parsed != nil {
+			res[word] = parsed
 		}
-		res[word] = phonetics
 	}
 	return res, nil
 }
 
-func (d Dictionary) Get(word string) []*Phone {
-	str, ok := d[strings.ToUpper(word)]
-	if !ok {
+func (d Dictionary) Get(word string) []Phone {
+	if res, ok := d[strings.ToUpper(word)]; ok {
+		return res
+	} else {
 		return nil
 	}
-	return parsePhones(str)
 }
 
-func parsePhones(raw string) []*Phone {
-	parts := strings.Split(raw, " ")
-	res := make([]*Phone, len(parts))
-	for i, part := range parts {
-		var err error
-		res[i], err = ParsePhone(part)
-		if err != nil {
+func (d Dictionary) GetRaw(word string) string {
+	res := ""
+	phones := d.Get(word)
+	if phones == nil {
+		return ""
+	}
+	for i, ph := range phones {
+		if i != 0 {
+			res += " "
+		}
+		res += ph.String()
+	}
+	return res
+}
+
+func parsePhones(raw string) []Phone {
+	comps := strings.Split(raw, " ")
+	res := make([]Phone, len(comps))
+	for i, comp := range comps {
+		res[i] = Phone(comp)
+		if !res[i].Valid() {
 			return nil
 		}
 	}

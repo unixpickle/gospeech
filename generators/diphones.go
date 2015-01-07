@@ -21,7 +21,7 @@ func ErrMain() error {
 	if len(os.Args) != 3 {
 		return errors.New("Usage: diphones <dictionary.txt> <common.txt>")
 	}
-	
+
 	// Read input files
 	fmt.Println("Reading input files...")
 	dict, err := gospeech.LoadDictionary(os.Args[1])
@@ -32,11 +32,11 @@ func ErrMain() error {
 	if err != nil {
 		return err
 	}
-	
+
 	// Sort the dictionary
 	fmt.Println("Sorting dictionary...")
 	dictKeys := SortDictionary(dict, common)
-	
+
 	// Generate diphones
 	fmt.Println("Generating diphones...")
 	diphones := map[string][]string{}
@@ -47,17 +47,18 @@ func ErrMain() error {
 		}
 		// Find all the diphones and check them
 		for i := 0; i < len(phones)-1; i++ {
-			diphone := phones[i].Letters + "-" + phones[i+1].Letters
+			// I admit, even I cannot read this code.
+			diphone := phones[i].Name() + "-" + phones[i+1].Name()
 			if list, ok := diphones[diphone]; ok && len(list) > 10 {
 				continue
 			} else if !ok {
 				diphones[diphone] = []string{}
 			}
-			example := strings.ToLower(word) + " (" + dict[word] + ")"
+			example := strings.ToLower(word) + " (" + dict.GetRaw(word) + ")"
 			diphones[diphone] = append(diphones[diphone], example)
 		}
 	}
-	
+
 	PrintDiphones(diphones)
 	return nil
 }

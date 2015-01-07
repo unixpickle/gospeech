@@ -21,7 +21,7 @@ func ErrMain() error {
 	if len(os.Args) != 3 {
 		return errors.New("Usage: edgephones <dictionary.txt> <common.txt>")
 	}
-	
+
 	// Read input files
 	fmt.Println("Reading input files...")
 	dict, err := gospeech.LoadDictionary(os.Args[1])
@@ -32,11 +32,11 @@ func ErrMain() error {
 	if err != nil {
 		return err
 	}
-	
+
 	// Sort the dictionary
 	fmt.Println("Sorting dictionary...")
 	dictKeys := SortDictionary(dict, common)
-	
+
 	// Generate keys and values
 	fmt.Println("Generating edge phones...")
 	result := map[string][]string{}
@@ -45,10 +45,10 @@ func ErrMain() error {
 		if phones == nil {
 			continue
 		}
-		
-		prefixPhone := "-" + phones[0].Letters
-		suffixPhone := phones[len(phones)-1].Letters + "-"
-		
+
+		prefixPhone := "-" + phones[0].Name()
+		suffixPhone := phones[len(phones)-1].Name() + "-"
+
 		for _, key := range []string{prefixPhone, suffixPhone} {
 			if list, ok := result[key]; !ok {
 				result[key] = []string{word}
@@ -57,7 +57,7 @@ func ErrMain() error {
 			}
 		}
 	}
-	
+
 	PrintKeyValues(result)
 	return nil
 }

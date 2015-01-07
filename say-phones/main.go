@@ -13,7 +13,7 @@ func main() {
 			"<phones ...>")
 		os.Exit(1)
 	}
-	phones := make([]*gospeech.Phone, 0, len(os.Args)-3)
+	phones := make([]gospeech.Phone, 0, len(os.Args)-3)
 	for _, str := range os.Args[3:] {
 		p, err := gospeech.ParsePhone(str)
 		if err != nil {

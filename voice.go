@@ -76,7 +76,8 @@ func loadRawVoice(path string) (Voice, error) {
 
 	// Ensure that the voice has every edge phone.
 	for _, phone := range AllPhones() {
-		for _, entry := range []string{"-" + phone.Name, phone.Name + "-"} {
+		name := phone.Name()
+		for _, entry := range []string{"-" + name, name + "-"} {
 			if _, ok := res[entry]; !ok {
 				return nil, errors.New("Missing edge phone: " + entry)
 			}
