@@ -12,7 +12,7 @@ The speech synthesizer requires a voice and a pronunciation dictionary. The form
 
 The synthesizer can read pronunciation dictionaries in a very specific format. Each line in a dictionary (separated by line feeds) is either a word entry or a comment. Comments begin with three semicolons.
 
-Every line which is not a comment corresponds to a word. The lines follow the format "WORD  PHONE1 PHONE2 ..."&mdash;that is, a word in all caps followed by two spaces followed by a space-delimited list of phones (which are listed below). For the vowel phones (i.e. AA, AE, AH, AO, AW, AY, EH, ER, EY, IH, IY, OW, OY, UH, and UW) a number 0, 1, or 2 may be added to note emphasis.
+Every line which is not a comment corresponds to a word. Each of these lines begins with a word in all caps followed by two spaces followed by a space-delimited list of phones (which are defined in the Phones section). A number between 0 and 2 (inclusive) may be appended to the vowel phones to indicate emphasis.
 
 Here is an example of a dictionary file:
 
@@ -30,7 +30,7 @@ Here is an example of a dictionary file:
 
 ## Voices
 
-A voice is simply a directory containing WAV files. The names of these files determines which phones or diphones they correspond to.
+A voice is simply a directory containing WAV files. The names of these files determine which phones or diphones they correspond to.
 
 Normal diphones are named using dashes. For example, the diphone between "AA" and "D" would be named "AA-D.wav".
 
@@ -58,11 +58,11 @@ The phones (individual sounds) that this synthesizer uses are as follows:
 | AY   | **I**reland, **i**tem                  |
 | B    | **b**asic, **b**elong                  |
 | CH   | **ch**annel, **ch**oice                |
-| D    | **d*ream, **d**esktop                  |
+| D    | **d**ream, **d**esktop                 |
 | DH   | **th**ose, **th**em                    |
 | EH   | **e**cho, **e**vidence, **e**nhance    |
 | ER   | **ear**nings, **ur**ban, **ear**ly     |
-| EY   | **eigh*t, **a**ges, **A**sia           |
+| EY   | **eigh**t, **a**ges, **A**sia          |
 | F    | **f**ind, **f**acility                 |
 | G    | **g**reat, **g**ame                    |
 | HH   | **h**ot, **h**azard                    |
@@ -81,10 +81,12 @@ The phones (individual sounds) that this synthesizer uses are as follows:
 | SH   | **sh**e, na**ti**on                    |
 | T    | **t**oo, **t**empla**t**e              |
 | TH   | **th**irty, **th**ick                  |
-| UH   | pl**u**s, sh**oo*k                     |
+| UH   | pl**u**s, sh**oo**k                    |
 | UW   | **oo**ps, **U**zbekistan, **oo**zing   |
 | V    | **v**ermont, **v**iolin                |
 | W    | **w**alnut, **w**orld                  |
 | Y    | **y**oga, **y**es                      |
 | Z    | **z**one, reali**z**e                  |
 | ZH   | **g**enre, presti**g**e                |
+
+The vowels are: AA, AE, AH, AO, AW, AY, EH, ER, EY, IH, IY, OW, OY, UH, and UW
