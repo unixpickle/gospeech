@@ -1,103 +1,105 @@
 package gospeech
 
 import (
-	"errors"
-	"strings"
+	"math"
+
+	"github.com/unixpickle/wav"
 )
 
-// These are the types of oral sounds that an English speaker can produce.
-const (
-	TypeAffricate = iota
-	TypeAspirate  = iota
-	TypeFricative = iota
-	TypeLiquid    = iota
-	TypeNasal     = iota
-	TypeSemivowel = iota
-	TypeStop      = iota
-	TypeVowel     = iota
-)
+// transitionFraction is the fraction of a phone's time that is spent
+// transitioning from the previous phone.
+const transitionFraction = 0.5
 
-// PhoneTypes associates each phone with its numeric type.
-var PhoneTypes = map[Phone]int{
-	"R": TypeLiquid, "W": TypeSemivowel, "Y": TypeSemivowel,
-	"B": TypeStop, "D": TypeStop, "G": TypeStop,
-	"K": TypeStop, "P": TypeStop, "T": TypeStop,
-	"AA": TypeVowel, "AE": TypeVowel, "AH": TypeVowel,
-	"AO": TypeVowel, "AW": TypeVowel, "AY": TypeVowel,
-	"EH": TypeVowel, "ER": TypeVowel, "EY": TypeVowel,
-	"IH": TypeVowel, "IY": TypeVowel, "OW": TypeVowel,
-	"OY": TypeVowel, "UH": TypeVowel, "UW": TypeVowel,
-	"CH": TypeAffricate, "JH": TypeAffricate, "DH": TypeFricative,
-	"F": TypeFricative, "S": TypeFricative, "SH": TypeFricative,
-	"TH": TypeFricative, "V": TypeFricative, "Z": TypeFricative,
-	"ZH": TypeFricative, "HH": TypeAspirate, "L": TypeLiquid,
-	"M": TypeNasal, "N": TypeNasal, "NG": TypeNasal,
+// consonantPull is the amount of influence consonants should have on
+// their neighboring vowels, measured from 0 to 1.
+const consonantPull = 0.2
+
+const maxFormantAmplitude = 0.3
+
+type Phone struct {
+	// Duration is the length of the phone in relative units.
+	// The average Duration for a given voice should be about 1.
+	Duration float64
+
+	Formants       [3]float64
+	FormantVolumes [3]float64
+
+	Consonant bool
+	Voiced    bool
+	Nasal     bool
+
+	// These fields describe the noise produced by a fricative consonant.
+	NoiseFrequency float64
+	NoiseSpread    float64
+	NoiseVolume    float64
 }
 
-// Phone is a phonetic sound.
-type Phone string
-
-// Name returns a string cast of the phone.
-func (p Phone) Name() string {
-	return string(p)
-}
-
-// String returns a string cast of the phone.
-func (p Phone) String() string {
-	return string(p)
-}
-
-// Type returns the type of sound produced by this phone.
-func (p Phone) Type() int {
-	return PhoneTypes[p]
-}
-
-// Valid returns whether or not the phone is valid.
-// Phones may be invalid if they were cast directly from strings.
-func (p Phone) Valid() bool {
-	_, ok := PhoneTypes[p]
-	return ok
-}
-
-// AllPhones returns an array of every basic phone in the English language.
-func AllPhones() []Phone {
-	str := "B D G K P T AA AE AH AO AW AY EH ER EY IH IY OW OY UH UW CH JH " +
-		"DH F S SH TH V Z ZH HH L R W Y M N NG"
-	comps := strings.Split(str, " ")
-	res := make([]Phone, len(comps))
-	for i, s := range comps {
-		res[i] = Phone(s)
+func (p *Phone) Synthesize(last *Phone, sound wav.Sound, phoneRate float64) {
+	if last == nil {
+		p.synthesizeStatic(sound, phoneRate)
+		return
 	}
-	return res
+	p.synthesizeTransition(last, sound, phoneRate)
+	p.synthesizeStatic(sound, phoneRate)
 }
 
-// ParsePhone parses a phone from its string representation.
-// This method automatically removes "0", "1", or "2" from the end of the string
-// before parsing it.
-func ParsePhone(ph string) (Phone, error) {
-	if len(ph) == 0 {
-		return "", errors.New("Empty phone is invalid.")
-	}
-	if ph[len(ph)-1] >= '0' && ph[len(ph)-1] <= '2' {
-		ph = ph[0 : len(ph)-1]
-	}
-	res := Phone(ph)
-	if !res.Valid() {
-		return "", errors.New("Invalid phone: " + ph)
-	}
-	return res, nil
-}
-
-// ParsePhones parses a space-delimited list of phones.
-func ParsePhones(raw string) ([]Phone, error) {
-	comps := strings.Split(raw, " ")
-	res := make([]Phone, len(comps))
-	for i, comp := range comps {
-		var err error
-		res[i], err = ParsePhone(comp)
-		if err != nil {
-			return nil, err
+func (p *Phone) synthesizeStatic(sound wav.Sound, phoneRate float64) {
+	sampleCount := int(float64(sound.SampleRate()) * p.Duration / phoneRate)
+	samples := make([]wav.Sample, sampleCount)
+	for i := 0; i < sampleCount; i++ {
+		var s wav.Sample
+		for j := 0; j < 3; j++ {
+			frequency := p.Formants[j]
+			amplitude := p.FormantVolumes[j] * maxFormantAmplitude
+			secondsElapsed := float64(i) / float64(sound.SampleRate())
+			wavValue := math.Sin(math.Pi * 2 * secondsElapsed * frequency)
+			s += wav.Sample(wavValue * amplitude)
 		}
+		if p.NoiseVolume > 0 {
+			// TODO: figure out how to generate noise at a given
+			// frequency here.
+		}
+		samples[i] = s
 	}
-	return res, nil
+	sound.SetSamples(append(sound.Samples(), samples...))
+}
+
+func (p *Phone) synthesizeTransition(last *Phone, sound wav.Sound, phoneRate float64) {
+	transitionTime := math.Min(last.Duration, p.Duration) * transitionFraction
+	transitionSamples := int(float64(sound.SampleRate()) * transitionTime / phoneRate)
+
+	samples := make([]wav.Sample, transitionSamples)
+
+	for i := 0; i < transitionSamples; i++ {
+		fraction := float64(i) / float64(transitionSamples)
+		fractionNew := fraction
+		if last.Consonant && !p.Consonant {
+			fractionNew = consonantPull*fraction + fraction*(1-consonantPull)
+		} else if p.Consonant && !last.Consonant {
+			fractionNew = consonantPull * fraction
+		}
+
+		var formants [3]float64
+		var formantVolumes [3]float64
+		for j := 0; j < 3; j++ {
+			lastFormant := last.Formants[j]
+			newFormant := p.Formants[j]
+			lastVolume := last.FormantVolumes[j]
+			newVolume := p.FormantVolumes[j]
+			formants[j] = lastFormant*(1-fractionNew) + newFormant*fractionNew
+			formantVolumes[j] = lastVolume*(1-fractionNew) + newVolume*fractionNew
+		}
+
+		var s wav.Sample
+		for j := 0; j < 3; j++ {
+			frequency := formants[j]
+			amplitude := formantVolumes[j] * maxFormantAmplitude
+			secondsElapsed := float64(i) / float64(sound.SampleRate())
+			wavValue := math.Sin(math.Pi * 2 * secondsElapsed * frequency)
+			s += wav.Sample(wavValue * amplitude)
+		}
+		samples[i] = s
+	}
+
+	sound.SetSamples(append(sound.Samples(), samples...))
 }

@@ -1,95 +1,285 @@
 package gospeech
 
 import (
-	"encoding/json"
-	"errors"
-	"github.com/unixpickle/wav"
-	"io/ioutil"
-	"os"
-	"path/filepath"
-	"strings"
+	"fmt"
 	"time"
+
+	"github.com/unixpickle/wav"
 )
 
-// Voice maps edge phones and diphones to sounds.
-type Voice map[string]wav.Sound
-
-// LoadVoice loads a voice from a directory.
-func LoadVoice(path string) (Voice, error) {
-	res, err := loadRawVoice(path)
-	if err != nil {
-		return nil, err
-	}
-
-	// Load the cuts.json file if possible
-	f, err := os.Open(filepath.Join(path, "cuts.json"))
-	if err != nil {
-		return res, nil
-	}
-	defer f.Close()
-	content, err := ioutil.ReadAll(f)
-	if err != nil {
-		return res, nil
-	}
-
-	// Parse cuts.json
-	var cuts map[string]fileCut
-	if err := json.Unmarshal(content, &cuts); err != nil {
-		return res, nil
-	}
-
-	// Apply the cuts
-	for name, cut := range cuts {
-		if sound, ok := res[name]; ok {
-			start := time.Duration(float64(time.Second) * cut.Start)
-			end := time.Duration(float64(time.Second) * cut.End)
-			wav.Crop(sound, start, end)
-		}
-	}
-
-	return res, nil
+type Voice struct {
+	Phones map[string]*Phone
 }
 
-func loadRawVoice(path string) (Voice, error) {
-	// Read the directory
-	f, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-	names, err := f.Readdirnames(-1)
-	f.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	// Load all WAV files
-	res := Voice{}
-	for _, name := range names {
-		if !strings.HasSuffix(name, ".wav") {
+func (v Voice) Synthesize(ipaString string, phoneRate float64) wav.Sound {
+	s := wav.NewPCM8Sound(1, 44100)
+	var lastPhone *Phone
+	for _, ph := range []rune(ipaString) {
+		if ph == ' ' {
+			wav.AppendSilence(s, time.Second)
+			lastPhone = nil
 			continue
 		}
-		baseName := name[0 : len(name)-4]
-		sound, err := wav.ReadSoundFile(filepath.Join(path, name))
-		if err != nil {
-			return nil, err
-		}
-		res[baseName] = sound
-	}
 
-	// Ensure that the voice has every edge phone.
-	for _, phone := range AllPhones() {
-		name := phone.Name()
-		for _, entry := range []string{"-" + name, name + "-"} {
-			if _, ok := res[entry]; !ok {
-				return nil, errors.New("Missing edge phone: " + entry)
-			}
+		phone := v.Phones[string(ph)]
+		if phone != nil {
+			fmt.Println("recognized phone:", string(ph))
+			phone.Synthesize(lastPhone, s, phoneRate)
+			lastPhone = phone
+		} else {
+			fmt.Println("unknown phone:", string(ph))
 		}
 	}
-
-	return res, nil
+	return s
 }
 
-type fileCut struct {
-	Start float64 `json:"start"`
-	End   float64 `json:"end"`
-}
+var DefaultVoice = Voice{Phones: map[string]*Phone{
+	"i": &Phone{
+		Duration:       1,
+		Formants:       [3]float64{280, 2250, 2890},
+		FormantVolumes: [3]float64{1, 1, 1},
+	},
+	"I": &Phone{
+		Duration:       1,
+		Formants:       [3]float64{400, 1920, 2560},
+		FormantVolumes: [3]float64{1, 1, 1},
+	},
+	"e": &Phone{
+		Duration:       1,
+		Formants:       [3]float64{400, 2200, 2890},
+		FormantVolumes: [3]float64{1, 1, 1},
+	},
+	"ə": &Phone{
+		Duration:       1,
+		Formants:       [3]float64{500, 1500, 2490},
+		FormantVolumes: [3]float64{1, 1, 1},
+	},
+	"ɛ": &Phone{
+		Duration:       1,
+		Formants:       [3]float64{550, 1770, 2490},
+		FormantVolumes: [3]float64{1, 1, 1},
+	},
+	"ʌ": &Phone{
+		Duration:       1,
+		Formants:       [3]float64{550, 1000, 2490},
+		FormantVolumes: [3]float64{1, 1, 1},
+	},
+	"æ": &Phone{
+		Duration:       1,
+		Formants:       [3]float64{690, 1660, 2490},
+		FormantVolumes: [3]float64{1, 1, 1},
+	},
+	"u": &Phone{
+		Duration:       1,
+		Formants:       [3]float64{310, 870, 2250},
+		FormantVolumes: [3]float64{1, 1, 1},
+	},
+	"ʊ": &Phone{
+		Duration:       1,
+		Formants:       [3]float64{450, 1030, 2380},
+		FormantVolumes: [3]float64{1, 1, 1},
+	},
+	"o": &Phone{
+		Duration:       1,
+		Formants:       [3]float64{450, 700, 2380},
+		FormantVolumes: [3]float64{1, 1, 1},
+	},
+	"ɔ": &Phone{
+		Duration:       1,
+		Formants:       [3]float64{590, 880, 2540},
+		FormantVolumes: [3]float64{1, 1, 1},
+	},
+	"a": &Phone{
+		Duration:       1,
+		Formants:       [3]float64{710, 1100, 2540},
+		FormantVolumes: [3]float64{1, 1, 1},
+	},
+	"p": &Phone{
+		Duration:       0.7,
+		Formants:       [3]float64{310, 870, 2250},
+		FormantVolumes: [3]float64{0, 0, 0},
+		Consonant:      true,
+		Voiced:         false,
+	},
+	"b": &Phone{
+		Duration:       0.7,
+		Formants:       [3]float64{310, 870, 2250},
+		FormantVolumes: [3]float64{0, 0, 0},
+		Consonant:      true,
+		Voiced:         true,
+	},
+	"t": &Phone{
+		Duration:       0.7,
+		Formants:       [3]float64{400, 1920, 2560},
+		FormantVolumes: [3]float64{0, 0, 0},
+		Consonant:      true,
+		Voiced:         false,
+	},
+	"d": &Phone{
+		Duration:       0.7,
+		Formants:       [3]float64{400, 1920, 2560},
+		FormantVolumes: [3]float64{0, 0, 0},
+		Consonant:      true,
+		Voiced:         true,
+	},
+	"k": &Phone{
+		Duration:       0.7,
+		Formants:       [3]float64{710, 1100, 2540},
+		FormantVolumes: [3]float64{0, 0, 0},
+		Consonant:      true,
+		Voiced:         false,
+	},
+	"g": &Phone{
+		Duration:       0.7,
+		Formants:       [3]float64{710, 1100, 2540},
+		FormantVolumes: [3]float64{0, 0, 0},
+		Consonant:      true,
+		Voiced:         true,
+	},
+	"θ": &Phone{
+		Duration:       0.7,
+		Formants:       [3]float64{500, 1500, 2490},
+		FormantVolumes: [3]float64{0, 0, 0},
+		Consonant:      true,
+		Voiced:         false,
+		NoiseFrequency: 1000,
+		NoiseSpread:    200,
+		NoiseVolume:    1,
+	},
+	"ð": &Phone{
+		Duration:       0.7,
+		Formants:       [3]float64{500, 1500, 2490},
+		FormantVolumes: [3]float64{0, 0, 0},
+		Consonant:      true,
+		Voiced:         true,
+		NoiseFrequency: 1000,
+		NoiseSpread:    200,
+		NoiseVolume:    1,
+	},
+	"f": &Phone{
+		Duration:       0.7,
+		Formants:       [3]float64{450, 1030, 2380},
+		FormantVolumes: [3]float64{0, 0, 0},
+		Consonant:      true,
+		Voiced:         false,
+		NoiseFrequency: 1000,
+		NoiseSpread:    200,
+		NoiseVolume:    1,
+	},
+	"v": &Phone{
+		Duration:       0.7,
+		Formants:       [3]float64{450, 1030, 2380},
+		FormantVolumes: [3]float64{0, 0, 0},
+		Consonant:      true,
+		Voiced:         true,
+		NoiseFrequency: 1000,
+		NoiseSpread:    200,
+		NoiseVolume:    1,
+	},
+	"s": &Phone{
+		Duration:       0.7,
+		Formants:       [3]float64{400, 1920, 2560},
+		FormantVolumes: [3]float64{0, 0, 0},
+		Consonant:      true,
+		Voiced:         false,
+		NoiseFrequency: 2000,
+		NoiseSpread:    200,
+		NoiseVolume:    1,
+	},
+	"z": &Phone{
+		Duration:       0.7,
+		Formants:       [3]float64{400, 1920, 2560},
+		FormantVolumes: [3]float64{0, 0, 0},
+		Consonant:      true,
+		Voiced:         true,
+		NoiseFrequency: 2000,
+		NoiseSpread:    200,
+		NoiseVolume:    1,
+	},
+	"ʃ": &Phone{
+		Duration:       0.7,
+		Formants:       [3]float64{280, 2250, 2890},
+		FormantVolumes: [3]float64{0, 0, 0},
+		Consonant:      true,
+		Voiced:         false,
+		NoiseFrequency: 1300,
+		NoiseSpread:    200,
+		NoiseVolume:    1,
+	},
+	"ʒ": &Phone{
+		Duration:       0.7,
+		Formants:       [3]float64{280, 2250, 2890},
+		FormantVolumes: [3]float64{0, 0, 0},
+		Consonant:      true,
+		Voiced:         true,
+		NoiseFrequency: 1300,
+		NoiseSpread:    200,
+		NoiseVolume:    1,
+	},
+	"h": &Phone{
+		Duration:       0.7,
+		Formants:       [3]float64{710, 1100, 2540},
+		FormantVolumes: [3]float64{0, 0, 0},
+		Consonant:      true,
+		Voiced:         false,
+		NoiseFrequency: 1000,
+		NoiseSpread:    200,
+		NoiseVolume:    1,
+	},
+	"m": &Phone{
+		Duration:       0.7,
+		Formants:       [3]float64{450, 1030, 2380},
+		FormantVolumes: [3]float64{0.7, 0.7, 0.7},
+		Consonant:      true,
+		Voiced:         true,
+		Nasal:          true,
+	},
+	"n": &Phone{
+		Duration:       0.7,
+		Formants:       [3]float64{500, 1500, 2490},
+		FormantVolumes: [3]float64{0.7, 0.7, 0.7},
+		Consonant:      true,
+		Voiced:         true,
+		Nasal:          true,
+	},
+	"ŋ": &Phone{
+		Duration:       0.7,
+		Formants:       [3]float64{710, 1100, 2540},
+		FormantVolumes: [3]float64{0.7, 0.7, 0.7},
+		Consonant:      true,
+		Voiced:         true,
+		Nasal:          true,
+	},
+	"l": &Phone{
+		Duration:       0.7,
+		Formants:       [3]float64{550, 1000, 2490},
+		FormantVolumes: [3]float64{0.7, 0.7, 0.7},
+		Consonant:      true,
+		Voiced:         true,
+	},
+	"ɹ": &Phone{
+		Duration:       1,
+		Formants:       [3]float64{710, 1100, 2540},
+		FormantVolumes: [3]float64{0.5, 0.5, 0.5},
+		Consonant:      true,
+		Voiced:         true,
+	},
+	"j": &Phone{
+		Duration:       0.2,
+		Formants:       [3]float64{280, 2250, 2890},
+		FormantVolumes: [3]float64{1, 1, 1},
+		Consonant:      true,
+	},
+	"w": &Phone{
+		Duration:       0.2,
+		Formants:       [3]float64{310, 870, 2250},
+		FormantVolumes: [3]float64{1, 1, 1},
+		Consonant:      true,
+	},
+	"ʔ": &Phone{
+		Duration:       0.2,
+		Formants:       [3]float64{100, 100, 100},
+		FormantVolumes: [3]float64{0, 0, 0},
+		Consonant:      true,
+	},
+}}
