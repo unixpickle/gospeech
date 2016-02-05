@@ -66,8 +66,14 @@ func (p *Phone) synthesizeStatic(sound wav.Sound, phoneRate float64) {
 
 		var s wav.Sample
 		for j := 0; j < 3; j++ {
-			frequency := p.Formants[j]
-			amplitude := p.FormantVolumes[j] * maxFormantAmplitude
+			var frequency, amplitude float64
+			if p.Type == Nasal {
+				frequency = []float64{250, 2500, 3250}[j]
+				amplitude = []float64{0.3, 0.1, 0.05}[j]
+			} else {
+				frequency = p.Formants[j]
+				amplitude = p.FormantVolumes[j] * maxFormantAmplitude
+			}
 			wavValue := math.Sin(math.Pi * 2 * secondsElapsed * frequency)
 			s += wav.Sample(wavValue * amplitude)
 		}
