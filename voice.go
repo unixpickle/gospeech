@@ -184,8 +184,8 @@ var DefaultVoice = Voice{Phones: map[string]*Phone{
 		Formants:       [3]float64{400, 1920, 2560},
 		FormantVolumes: [3]float64{0, 0, 0},
 		Unvoiced:       true,
-		NoiseFrequency: 2000,
-		NoiseSpread:    200,
+		NoiseFrequency: 5000,
+		NoiseSpread:    1000,
 		NoiseVolume:    1,
 	},
 	"z": &Phone{

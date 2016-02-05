@@ -17,7 +17,7 @@ func main() {
 		os.Exit(1)
 	}
 	phonetics := string(input)
-	synthesized := gospeech.DefaultVoice.Synthesize(phonetics, 8)
+	synthesized := gospeech.DefaultVoice.Synthesize(phonetics, 6)
 	wav.WriteFile(synthesized, "output.wav")
 	fmt.Println("Saved output.wav")
 }
