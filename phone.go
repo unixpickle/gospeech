@@ -2,6 +2,7 @@ package gospeech
 
 import (
 	"math"
+	"math/rand"
 
 	"github.com/unixpickle/wav"
 )
@@ -15,6 +16,7 @@ const transitionFraction = 0.5
 const consonantPull = 0.2
 
 const maxFormantAmplitude = 0.3
+const maxNoiseAmplitude = 0.5
 
 type PhoneType int
 
@@ -60,17 +62,20 @@ func (p *Phone) synthesizeStatic(sound wav.Sound, phoneRate float64) {
 	sampleCount := int(float64(sound.SampleRate()) * p.Duration / phoneRate)
 	samples := make([]wav.Sample, sampleCount)
 	for i := 0; i < sampleCount; i++ {
+		secondsElapsed := float64(i) / float64(sound.SampleRate())
+
 		var s wav.Sample
 		for j := 0; j < 3; j++ {
 			frequency := p.Formants[j]
 			amplitude := p.FormantVolumes[j] * maxFormantAmplitude
-			secondsElapsed := float64(i) / float64(sound.SampleRate())
 			wavValue := math.Sin(math.Pi * 2 * secondsElapsed * frequency)
 			s += wav.Sample(wavValue * amplitude)
 		}
 		if p.NoiseVolume > 0 {
-			// TODO: figure out how to generate noise at a given
-			// frequency here.
+			// TODO: figure out better way of creating noise here.
+			noiseValue := math.Sin(math.Pi * 2 * secondsElapsed * p.NoiseFrequency)
+			noiseValue *= rand.Float64() * p.NoiseVolume * maxNoiseAmplitude
+			s += wav.Sample(noiseValue)
 		}
 		samples[i] = s
 	}
@@ -86,9 +91,9 @@ func (p *Phone) synthesizeTransition(last *Phone, sound wav.Sound, phoneRate flo
 	for i := 0; i < transitionSamples; i++ {
 		fraction := float64(i) / float64(transitionSamples)
 		fractionNew := fraction
-		if last.Consonant && !p.Consonant {
+		if last.Type != Vowel && p.Type == Vowel {
 			fractionNew = consonantPull*fraction + fraction*(1-consonantPull)
-		} else if p.Consonant && !last.Consonant {
+		} else if p.Type != Vowel && last.Type == Vowel {
 			fractionNew = consonantPull * fraction
 		}
 
