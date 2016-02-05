@@ -18,6 +18,8 @@ const consonantPull = 0.2
 const maxFormantAmplitude = 0.3
 const maxNoiseAmplitude = 0.5
 
+const aspirationDuration = 0.1
+
 type PhoneType int
 
 const (
@@ -85,6 +87,14 @@ func (p *Phone) synthesizeStatic(sound wav.Sound, phoneRate float64) {
 		}
 		samples[i] = s
 	}
+
+	if p.Type == Stop {
+		asperationSamples := int(float64(sound.SampleRate()) / phoneRate * aspirationDuration)
+		for i := 0; i < asperationSamples; i++ {
+			samples = append(samples, wav.Sample(rand.Float64()*2-1))
+		}
+	}
+
 	sound.SetSamples(append(sound.Samples(), samples...))
 }
 
