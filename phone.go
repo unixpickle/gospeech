@@ -63,6 +63,7 @@ func (p *Phone) Synthesize(last *Phone, sound wav.Sound, phoneRate float64) {
 func (p *Phone) synthesizeStatic(sound wav.Sound, phoneRate float64) {
 	sampleCount := int(float64(sound.SampleRate()) * p.Duration / phoneRate)
 	samples := make([]wav.Sample, sampleCount)
+	noise := newNoiseGenerator(p.NoiseFrequency, p.NoiseSpread)
 	for i := 0; i < sampleCount; i++ {
 		secondsElapsed := float64(i) / float64(sound.SampleRate())
 
@@ -80,10 +81,8 @@ func (p *Phone) synthesizeStatic(sound wav.Sound, phoneRate float64) {
 			s += wav.Sample(wavValue * amplitude)
 		}
 		if p.NoiseVolume > 0 {
-			// TODO: figure out better way of creating noise here.
-			noiseValue := math.Sin(math.Pi * 2 * secondsElapsed * p.NoiseFrequency)
-			noiseValue *= rand.Float64() * p.NoiseVolume * maxNoiseAmplitude
-			s += wav.Sample(noiseValue)
+			noiseSample := noise.nextSample(secondsElapsed)
+			s += wav.Sample(noiseSample * p.NoiseVolume * maxNoiseAmplitude)
 		}
 		samples[i] = s
 	}

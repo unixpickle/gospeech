@@ -1,7 +1,6 @@
 package gospeech
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/unixpickle/wav"
@@ -16,18 +15,14 @@ func (v Voice) Synthesize(ipaString string, phoneRate float64) wav.Sound {
 	var lastPhone *Phone
 	for _, ph := range []rune(ipaString) {
 		if ph == ' ' {
-			wav.AppendSilence(s, time.Second)
+			wav.AppendSilence(s, time.Duration(float64(time.Second)/phoneRate))
 			lastPhone = nil
 			continue
 		}
-
 		phone := v.Phones[string(ph)]
 		if phone != nil {
-			fmt.Println("recognized phone:", string(ph))
 			phone.Synthesize(lastPhone, s, phoneRate)
 			lastPhone = phone
-		} else {
-			fmt.Println("unknown phone:", string(ph))
 		}
 	}
 	return s
@@ -181,7 +176,7 @@ var DefaultVoice = Voice{Phones: map[string]*Phone{
 		FormantVolumes: [3]float64{0, 0, 0},
 		NoiseFrequency: 1000,
 		NoiseSpread:    200,
-		NoiseVolume:    1,
+		NoiseVolume:    0.3,
 	},
 	"s": &Phone{
 		Type:           Fricative,
@@ -227,8 +222,8 @@ var DefaultVoice = Voice{Phones: map[string]*Phone{
 		Formants:       [3]float64{710, 1100, 2540},
 		FormantVolumes: [3]float64{0, 0, 0},
 		Unvoiced:       true,
-		NoiseFrequency: 1000,
-		NoiseSpread:    200,
+		NoiseFrequency: 600,
+		NoiseSpread:    600,
 		NoiseVolume:    1,
 	},
 	"m": &Phone{
