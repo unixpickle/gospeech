@@ -210,7 +210,6 @@ func (f Fricative) EncodeBeginning(system VocalSystem, lastPhone, nextPhone Phon
 
 	turbulence := system.Turbulence()[tracks.TrackID(f.Type)]
 	turbulence.AdjustVolume(0.3, time.Millisecond*100)
-	turbulence.AdjustVolume(0, time.Millisecond*200)
 	system.EvenOut()
 }
 

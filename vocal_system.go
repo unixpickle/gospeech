@@ -40,7 +40,7 @@ func NewVocalSystem() VocalSystem {
 			"F":  tracks.NewToneTrack(4250, 0, 1000),
 			"K":  tracks.NewToneTrack(4250, 0, 1000),
 			"H": tracks.TrackSet{
-				"F1": tracks.NewToneTrack(280, 0, 280),
+				"F1": tracks.NewToneTrack(1000, 0, 500),
 				"F2": tracks.NewToneTrack(2250, 0, 500),
 				"F3": tracks.NewToneTrack(2890, 0, 500),
 			},
