@@ -27,6 +27,10 @@ func (v Voice) Synthesize(ipaString string, phoneRate float64) wav.Sound {
 		}
 	}
 
+	if len(word) > 0 {
+		words = append(words, word)
+	}
+
 	for i, word := range words {
 		if i != 0 {
 			vocalSystem.AdjustVolume(0, time.Millisecond*50)
