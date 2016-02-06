@@ -95,6 +95,17 @@ func (t TrackSet) Continue(duration time.Duration) {
 	}
 }
 
+// EvenOut continues every track as much as necessary to bring it
+// in line with the longest track in the set.
+func (t TrackSet) EvenOut() {
+	dur := t.Duration()
+	for _, track := range t {
+		if track.Duration() < dur {
+			track.Continue(dur - track.Duration())
+		}
+	}
+}
+
 // Volume returns the average volume of the tracks in this set.
 func (t TrackSet) Volume() float64 {
 	var sum float64
