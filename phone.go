@@ -154,16 +154,14 @@ func (v VelarPlosive) EncodeBeginning(system VocalSystem, lastPhone, nextPhone P
 	system.ConsonantVoice().AdjustVolume(0, time.Millisecond*50)
 	system.Liquid().AdjustVolume(0, time.Millisecond*50)
 
-	system.Continue(time.Millisecond * 10)
 	if v.Voiced {
-		system.ConsonantVoice().AdjustVolume(0.3, time.Millisecond*50)
-		system.ConsonantVoice().AdjustVolume(0, time.Millisecond*50)
+		system.ConsonantVoice().AdjustVolume(0.1, time.Millisecond*20)
 	}
 	turbulence := system.Turbulence()[tracks.TrackID("K")]
 	turbulence.Continue(time.Millisecond * 20)
-	turbulence.AdjustVolume(0.3, time.Millisecond*3)
+	turbulence.AdjustVolume(0.2, time.Millisecond*5)
 	turbulence.Continue(time.Millisecond * 20)
-	turbulence.AdjustVolume(0, time.Millisecond*20)
+	turbulence.AdjustVolume(0, time.Millisecond*10)
 	system.EvenOut()
 }
 

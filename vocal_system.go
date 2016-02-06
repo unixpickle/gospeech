@@ -38,7 +38,10 @@ func NewVocalSystem() VocalSystem {
 			"TH": tracks.NewToneTrack(3500, 0, 1000),
 			"P":  tracks.NewToneTrack(400, 0, 400),
 			"F":  tracks.NewToneTrack(4250, 0, 1000),
-			"K":  tracks.NewToneTrack(4250, 0, 1000),
+			"K": tracks.TrackSet{
+				"1": tracks.NewToneTrack(2500, 0, 1000),
+				"2": tracks.NewToneTrack(3500, 0, 1000),
+			},
 			"H": tracks.TrackSet{
 				"F1": tracks.NewToneTrack(1000, 0, 500),
 				"F2": tracks.NewToneTrack(2250, 0, 500),
@@ -46,9 +49,8 @@ func NewVocalSystem() VocalSystem {
 			},
 		},
 		"ConsonantVoice": tracks.TrackSet{
-			"Humm1": tracks.NewToneTrack(200, 0, 0),
-			"Humm2": tracks.NewToneTrack(300, 0, 0),
-			"Humm3": tracks.NewToneTrack(400, 0, 0),
+			"Humm1": tracks.NewToneTrack(400, 0, 0),
+			"Humm2": tracks.NewToneTrack(350, 0, 0),
 		},
 		"Liquid": tracks.NewToneTrack(500, 0, 0),
 	}}
