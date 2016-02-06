@@ -10,7 +10,8 @@ type Phone interface {
 	// EncodeBeginning encodes the beginning of the phone into the given vocal system.
 	// This should also encode the transition from the previous phone, if applicable.
 	// The lastPhone argument will be nil if this is the first phone in the word.
-	EncodeBeginning(system VocalSystem, lastPhone Phone)
+	// The nextPhone argument will be nil if this is the last phone in the word.
+	EncodeBeginning(system VocalSystem, lastPhone, nextPhone Phone)
 
 	// FormantPull tells the next phone how its formants should be initially modified.
 	// It returns the initial formants for the next phone, given the steady-state formants of said
@@ -23,7 +24,7 @@ type Vowel struct {
 	Duration time.Duration
 }
 
-func (v Vowel) EncodeBeginning(system VocalSystem, lastPhone Phone) {
+func (v Vowel) EncodeBeginning(system VocalSystem, lastPhone, nextPhone Phone) {
 	if lastPhone != nil {
 		startFormant := lastPhone.FormantPull(v.Formants)
 		system.AdjustFormants(startFormant, v.Duration/6)
@@ -50,7 +51,7 @@ type BilabialPlosive struct {
 	Voiced bool
 }
 
-func (b BilabialPlosive) EncodeBeginning(system VocalSystem, lastPhone Phone) {
+func (b BilabialPlosive) EncodeBeginning(system VocalSystem, lastPhone, nextPhone Phone) {
 	if system.FormantsTrack().Volume() > 0 {
 		system.AdjustFormants(b.FormantPull(system.Formants()), time.Millisecond*50)
 	}
@@ -88,7 +89,7 @@ type AlveolarPlosive struct {
 	ContinueToNext bool
 }
 
-func (a AlveolarPlosive) EncodeBeginning(system VocalSystem, lastPhone Phone) {
+func (a AlveolarPlosive) EncodeBeginning(system VocalSystem, lastPhone, nextPhone Phone) {
 	if system.FormantsTrack().Volume() > 0 {
 		system.AdjustFormants(a.FormantPull(system.Formants()), time.Millisecond*50)
 	}
@@ -124,7 +125,7 @@ type VelarPlosive struct {
 	Voiced bool
 }
 
-func (v VelarPlosive) EncodeBeginning(system VocalSystem, lastPhone Phone) {
+func (v VelarPlosive) EncodeBeginning(system VocalSystem, lastPhone, nextPhone Phone) {
 	if system.FormantsTrack().Volume() > 0 {
 		system.AdjustFormants(v.FormantPull(system.Formants()), time.Millisecond*50)
 	}
@@ -160,7 +161,7 @@ type Nasal struct {
 	Formants FormantState
 }
 
-func (n Nasal) EncodeBeginning(system VocalSystem, lastPhone Phone) {
+func (n Nasal) EncodeBeginning(system VocalSystem, lastPhone, nextPhone Phone) {
 	if system.FormantsTrack().Volume() > 0 {
 		system.AdjustFormants(n.FormantPull(system.Formants()), time.Millisecond*50)
 	}
@@ -199,7 +200,7 @@ type Fricative struct {
 	Voiced bool
 }
 
-func (f Fricative) EncodeBeginning(system VocalSystem, lastPhone Phone) {
+func (f Fricative) EncodeBeginning(system VocalSystem, lastPhone, nextPhone Phone) {
 	if system.FormantsTrack().Volume() > 0 {
 		system.AdjustFormants(f.FormantPull(system.Formants()), time.Millisecond*50)
 	}
@@ -218,26 +219,26 @@ func (f Fricative) FormantPull(end FormantState) FormantState {
 	return end
 }
 
-// An AlveolarApproximant represents an "r" sound (without trill).
-type AlveolarApproximant struct {
+// An RetroflexLiquid represents an "r" sound (without trill).
+type RetroflexLiquid struct {
 	Formants FormantState
 }
 
-func (a AlveolarApproximant) EncodeBeginning(system VocalSystem, lastPhone Phone) {
-	vowel := Vowel{Formants: a.Formants, Duration: time.Millisecond * 150}
-	vowel.EncodeBeginning(system, lastPhone)
+func (r RetroflexLiquid) EncodeBeginning(system VocalSystem, lastPhone, nextPhone Phone) {
+	vowel := Vowel{Formants: r.Formants, Duration: time.Millisecond * 150}
+	vowel.EncodeBeginning(system, lastPhone, nextPhone)
 }
 
-func (a AlveolarApproximant) FormantPull(end FormantState) FormantState {
-	return a.Formants
+func (r RetroflexLiquid) FormantPull(end FormantState) FormantState {
+	return r.Formants
 }
 
-// An AlveolarLateralApproximant represents an "l" sound.
-type AlveolarLateralApproximant struct{}
+// A LateralLiquid represents an "l" sound.
+type LateralLiquid struct{}
 
-func (a AlveolarLateralApproximant) EncodeBeginning(system VocalSystem, lastPhone Phone) {
+func (l LateralLiquid) EncodeBeginning(system VocalSystem, lastPhone, nextPhone Phone) {
 	if system.FormantsTrack().Volume() > 0 {
-		system.AdjustFormants(a.FormantPull(system.Formants()), time.Millisecond*50)
+		system.AdjustFormants(l.FormantPull(system.Formants()), time.Millisecond*50)
 	}
 	system.Turbulence().AdjustVolume(0, time.Millisecond*50)
 	system.ConsonantVoice().AdjustVolume(0, time.Millisecond*50)
@@ -246,11 +247,24 @@ func (a AlveolarLateralApproximant) EncodeBeginning(system VocalSystem, lastPhon
 	system.Continue(time.Millisecond * 100)
 }
 
-func (a AlveolarLateralApproximant) FormantPull(end FormantState) FormantState {
+func (l LateralLiquid) FormantPull(end FormantState) FormantState {
 	end.Volumes = [3]float64{}
 	pullFrequencies := [3]float64{450, 1030, 2380}
 	for i := 0; i < 3; i++ {
 		end.Frequencies[i] = end.Frequencies[i]*0.9 + pullFrequencies[i]*0.1
 	}
+	return end
+}
+
+// A GlottalStop represents a pause, like in "uh-oh" or "Batman".
+type GlottalStop struct{}
+
+func (g GlottalStop) EncodeBeginning(system VocalSystem, lastPhone, nextPhone Phone) {
+	system.AdjustVolume(0, time.Millisecond*50)
+	system.Continue(time.Millisecond * 50)
+}
+
+func (g GlottalStop) FormantPull(end FormantState) FormantState {
+	end.Volumes = [3]float64{}
 	return end
 }

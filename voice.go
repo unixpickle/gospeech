@@ -12,20 +12,38 @@ type Voice struct {
 
 func (v Voice) Synthesize(ipaString string, phoneRate float64) wav.Sound {
 	vocalSystem := NewVocalSystem()
-	var lastPhone Phone
+
+	words := [][]Phone{}
+	word := []Phone{}
+
 	for _, ph := range []rune(ipaString) {
 		if ph == ' ' {
-			vocalSystem.AdjustVolume(0, time.Millisecond*50)
-			vocalSystem.Continue(time.Millisecond * 300)
-			lastPhone = nil
-			continue
-		}
-		phone := v.Phones[string(ph)]
-		if phone != nil {
-			phone.EncodeBeginning(vocalSystem, lastPhone)
-			lastPhone = phone
+			words = append(words, word)
+			word = []Phone{}
+		} else {
+			if phone := v.Phones[string(ph)]; phone != nil {
+				word = append(word, phone)
+			}
 		}
 	}
+
+	for i, word := range words {
+		if i != 0 {
+			vocalSystem.AdjustVolume(0, time.Millisecond*50)
+			vocalSystem.Continue(time.Millisecond * 300)
+		}
+		for i, phone := range word {
+			var lastPhone, nextPhone Phone
+			if i > 0 {
+				lastPhone = word[i-1]
+			}
+			if i < len(word)-1 {
+				nextPhone = word[i+1]
+			}
+			phone.EncodeBeginning(vocalSystem, lastPhone, nextPhone)
+		}
+	}
+
 	s := wav.NewPCM8Sound(1, 44100)
 	s.SetSamples(vocalSystem.Encode(44100))
 	return s

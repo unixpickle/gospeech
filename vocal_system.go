@@ -12,6 +12,13 @@ type FormantState struct {
 	Volumes     [3]float64
 }
 
+func NewFormantState(f1, v1, f2, v2, f3, v3 float64) FormantState {
+	return FormantState{
+		Frequencies: [3]float64{f1, f2, f3},
+		Volumes:     [3]float64{v1, v2, v3},
+	}
+}
+
 // A VocalSystem manages speech-like qualities in a TrackSet.
 type VocalSystem struct {
 	tracks.TrackSet
