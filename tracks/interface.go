@@ -38,7 +38,7 @@ type TrackSet map[TrackID]Track
 
 // ExcludeTracks returns a TrackSet that does not contain tracks
 // with the given track IDs.
-func (t TrackSet) ExcludeTracks(ids []TrackID) TrackSet {
+func (t TrackSet) ExcludeTracks(ids ...TrackID) TrackSet {
 	res := TrackSet{}
 OuterLoop:
 	for id, val := range t {
