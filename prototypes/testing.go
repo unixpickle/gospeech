@@ -60,17 +60,18 @@ func encodeIng(set tracks.TrackSet) {
 	set.EvenOut()
 	set.Continue(time.Millisecond * 300)
 
-	newFormants := map[string]float64{"F1": 400, "F2": 1920, "F3": 2560}
+	newFormants := map[string]float64{"F1": 400, "F2": 1800, "F3": 2860}
 	for name, track := range set["I"].(tracks.TrackSet) {
-		track.(*tracks.ToneTrack).AdjustAll(newFormants[string(name)], 0, 0, time.Millisecond*200)
+		track.(*tracks.ToneTrack).AdjustAll(newFormants[string(name)], 0.1, 0, time.Millisecond*100)
 	}
 
-	nasal := set["Nasal"].(tracks.TrackSet)
-	nasal.Continue(time.Millisecond * 90)
-	nasal[tracks.TrackID("F1")].AdjustVolume(0.3/2, time.Millisecond*140)
-	nasal[tracks.TrackID("F2")].AdjustVolume(0.1/2, time.Millisecond*140)
-	nasal[tracks.TrackID("F3")].AdjustVolume(0.1/2, time.Millisecond*140)
+	newFormants = map[string]float64{"F1": 250, "F2": 2500, "F3": 3250}
+	newAmplitudes := map[string]float64{"F1": 0.3, "F2": 0.1, "F3": 0.1}
+	for name, track := range set["I"].(tracks.TrackSet) {
+		track.(*tracks.ToneTrack).AdjustAll(newFormants[string(name)],
+			newAmplitudes[string(name)], 0, time.Millisecond*30)
+	}
 
 	set.EvenOut()
-	set.AdjustVolume(0, 0)
+	set.AdjustVolume(0, time.Millisecond*100)
 }
