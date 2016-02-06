@@ -13,10 +13,14 @@ type Phone interface {
 	// The nextPhone argument will be nil if this is the last phone in the word.
 	EncodeBeginning(system VocalSystem, lastPhone, nextPhone Phone)
 
-	// FormantPull tells the next phone how its formants should be initially modified.
+	// FormantPull tells the next phone how its formants should be modified initially.
 	// It returns the initial formants for the next phone, given the steady-state formants of said
 	// phone.
 	FormantPull(nextFormant FormantState) FormantState
+
+	// TransitionTime is the amount of time that the formants of the next phone should take to reach
+	// steady state after starting at the return value of FormantPull().
+	TransitionTime() time.Duration
 }
 
 type Vowel struct {
@@ -28,7 +32,7 @@ func (v Vowel) EncodeBeginning(system VocalSystem, lastPhone, nextPhone Phone) {
 	if lastPhone != nil {
 		startFormant := lastPhone.FormantPull(v.Formants)
 		system.AdjustFormants(startFormant, v.Duration/6)
-		system.AdjustFormants(v.Formants, v.Duration/2)
+		system.AdjustFormants(v.Formants, lastPhone.TransitionTime())
 	} else {
 		startFormants := v.Formants
 		startFormants.Volumes = [3]float64{}
@@ -46,6 +50,10 @@ func (v Vowel) FormantPull(nextFormant FormantState) FormantState {
 	return v.Formants
 }
 
+func (v Vowel) TransitionTime() time.Duration {
+	return v.Duration / 2
+}
+
 // A BilabialPlosive represents a "b" or "p" sound.
 type BilabialPlosive struct {
 	Voiced bool
@@ -53,31 +61,40 @@ type BilabialPlosive struct {
 
 func (b BilabialPlosive) EncodeBeginning(system VocalSystem, lastPhone, nextPhone Phone) {
 	if system.FormantsTrack().Volume() > 0 {
-		system.AdjustFormants(b.FormantPull(system.Formants()), time.Millisecond*50)
+		endFormant := b.previousFormantPull(system.Formants())
+		system.AdjustFormants(endFormant, time.Millisecond*30)
 	}
-	system.Turbulence().AdjustVolume(0, time.Millisecond*50)
-	system.ConsonantVoice().AdjustVolume(0, time.Millisecond*50)
-	system.Liquid().AdjustVolume(0, time.Millisecond*50)
-
-	system.Continue(time.Millisecond * 10)
+	system.Turbulence().AdjustVolume(0, time.Millisecond*30)
+	system.ConsonantVoice().AdjustVolume(0, time.Millisecond*30)
+	system.Liquid().AdjustVolume(0, time.Millisecond*30)
+	system.Continue(time.Millisecond * 50)
 	if b.Voiced {
-		system.ConsonantVoice().AdjustVolume(0.3, time.Millisecond*50)
-		system.ConsonantVoice().AdjustVolume(0, time.Millisecond*50)
+		system.ConsonantVoice().AdjustVolume(0.1, time.Millisecond*10)
 	}
-	turbulence := system.Turbulence()[tracks.TrackID("B")]
-	turbulence.Continue(time.Millisecond * 20)
+	turbulence := system.Turbulence()[tracks.TrackID("P")]
 	turbulence.AdjustVolume(0.3, time.Millisecond*3)
-	turbulence.Continue(time.Millisecond * 20)
-	turbulence.AdjustVolume(0, time.Millisecond*20)
+	turbulence.Continue(time.Millisecond * 30)
 	system.EvenOut()
 }
 
 func (b BilabialPlosive) FormantPull(end FormantState) FormantState {
-	end.Volumes = [3]float64{}
 	for i := 0; i < 3; i++ {
+		end.Volumes[i] *= 1
 		end.Frequencies[i] *= 0.9
 	}
 	return end
+}
+
+func (v BilabialPlosive) TransitionTime() time.Duration {
+	return time.Millisecond * 10
+}
+
+func (b BilabialPlosive) previousFormantPull(last FormantState) FormantState {
+	for i := 0; i < 3; i++ {
+		last.Volumes[i] *= 0
+		last.Frequencies[i] *= 0.9
+	}
+	return last
 }
 
 // An AlveolarPlosive represents a "t" or "d" sound.
@@ -120,6 +137,10 @@ func (a AlveolarPlosive) FormantPull(end FormantState) FormantState {
 	return end
 }
 
+func (v AlveolarPlosive) TransitionTime() time.Duration {
+	return time.Millisecond * 75
+}
+
 // A VelarPlosive represents a "k" or "g" sound.
 type VelarPlosive struct {
 	Voiced bool
@@ -152,6 +173,10 @@ func (v VelarPlosive) FormantPull(end FormantState) FormantState {
 	res.Frequencies[0] = end.Frequencies[0]*0.9 + end.Frequencies[1]*0.1
 	res.Frequencies[1] = end.Frequencies[1]*0.9 + end.Frequencies[0]*0.1
 	return res
+}
+
+func (v VelarPlosive) TransitionTime() time.Duration {
+	return time.Millisecond * 30
 }
 
 // A Nasal represents an "n", "m", or "ng" sound.
@@ -192,6 +217,10 @@ func (n Nasal) FormantPull(end FormantState) FormantState {
 	return end
 }
 
+func (v Nasal) TransitionTime() time.Duration {
+	return time.Millisecond * 50
+}
+
 // A Fricative represents any consonant which is characterized by turbulent airflow.
 type Fricative struct {
 	// Type is "F", "TH", "S", "SH", or "H", indicating which kind of fricative this is.
@@ -218,6 +247,10 @@ func (f Fricative) FormantPull(end FormantState) FormantState {
 	return end
 }
 
+func (v Fricative) TransitionTime() time.Duration {
+	return time.Millisecond * 100
+}
+
 // An RetroflexLiquid represents an "r" sound (without trill).
 type RetroflexLiquid struct {
 	Formants FormantState
@@ -230,6 +263,10 @@ func (r RetroflexLiquid) EncodeBeginning(system VocalSystem, lastPhone, nextPhon
 
 func (r RetroflexLiquid) FormantPull(end FormantState) FormantState {
 	return r.Formants
+}
+
+func (v RetroflexLiquid) TransitionTime() time.Duration {
+	return time.Millisecond * 100
 }
 
 // A LateralLiquid represents an "l" sound.
@@ -255,6 +292,10 @@ func (l LateralLiquid) FormantPull(end FormantState) FormantState {
 	return end
 }
 
+func (v LateralLiquid) TransitionTime() time.Duration {
+	return time.Millisecond * 100
+}
+
 // A GlottalStop represents a pause, like in "uh-oh" or "Batman".
 type GlottalStop struct{}
 
@@ -266,4 +307,8 @@ func (g GlottalStop) EncodeBeginning(system VocalSystem, lastPhone, nextPhone Ph
 func (g GlottalStop) FormantPull(end FormantState) FormantState {
 	end.Volumes = [3]float64{}
 	return end
+}
+
+func (v GlottalStop) TransitionTime() time.Duration {
+	return time.Millisecond * 30
 }
