@@ -86,10 +86,12 @@ func (s *ToneTrack) Continue(duration time.Duration) {
 	} else {
 		seg := &noiseSegment{
 			duration:       duration,
+			startSpread:    lastSeg.endSpread,
 			startFrequency: lastSeg.endFrequency,
 			startVolume:    lastSeg.endVolume,
 			endFrequency:   lastSeg.endFrequency,
 			endVolume:      lastSeg.endVolume,
+			endSpread:      lastSeg.endSpread,
 		}
 		s.segments = append(s.segments, seg)
 	}
