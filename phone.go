@@ -232,8 +232,13 @@ func (f Fricative) EncodeBeginning(system VocalSystem, lastPhone, nextPhone Phon
 		system.AdjustFormants(f.FormantPull(system.Formants()), time.Millisecond*50)
 	}
 	system.Turbulence().ExcludeTracks(tracks.TrackID(f.Type)).AdjustVolume(0, time.Millisecond*50)
-	system.ConsonantVoice().AdjustVolume(0, time.Millisecond*50)
 	system.Liquid().AdjustVolume(0, time.Millisecond*50)
+
+	if f.Voiced {
+		system.ConsonantVoice().AdjustVolume(0.3, time.Millisecond*100)
+	} else {
+		system.ConsonantVoice().AdjustVolume(0, time.Millisecond*50)
+	}
 
 	turbulence := system.Turbulence()[tracks.TrackID(f.Type)]
 	turbulence.AdjustVolume(0.3, time.Millisecond*100)
