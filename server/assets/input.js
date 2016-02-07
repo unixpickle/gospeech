@@ -1,10 +1,21 @@
 (function() {
 
   var inputType = 'text';
+  var ipaSpecialChars = 'əɛʌæʊɔŋθðʃʒɹʔɾ';
 
   function handleInputTypeChanged() {
-    var isIPA = document.getElementById('ipa-input').checked;
+    var isIPA = document.getElementById('ipa-input-type').checked;
     inputType = isIPA ? 'ipa' : 'text';
+
+    var ipaInput = document.getElementById('ipa-input');
+    var ipaInputBreak = document.getElementById('ipa-input-break');
+    if (isIPA) {
+      ipaInput.style.display = 'inline-block';
+      ipaInputBreak.style.display = 'block';
+    } else {
+      ipaInput.style.display = 'none';
+      ipaInputBreak.style.display = 'none';
+    }
   }
 
   function configureInputTypeControls() {
@@ -17,6 +28,29 @@
         handleInputTypeChanged();
       }.bind(null, input));
       input.addEventListener('change', handleInputTypeChanged);
+    }
+  }
+
+  function configureSpecialCharacters() {
+    var ipaInput = document.getElementById('ipa-input');
+    for (var i = 0, len = ipaSpecialChars.length; i < len; ++i) {
+      var char = ipaSpecialChars[i];
+      var button = document.createElement('button');
+      button.innerText = char;
+      button.addEventListener('click', function(char) {
+        var textInput = document.getElementById('text-input');
+        textInput.value += char;
+        if ('number' === typeof textInput.selectionStart) {
+          textInput.selectionStart = textInput.selectionEnd = textInput.value.length;
+        } else if ('undefined' !== typeof textInput.createTextRange) {
+          textInput.focus();
+          var range = textInput.createTextRange();
+          e.collapse(false);
+          range.select();
+        }
+      }.bind(this, char));
+      button.className = 'ipa-input-symbol';
+      ipaInput.appendChild(button);
     }
   }
 
@@ -43,6 +77,10 @@
     setInputEnabled(true);
   };
 
-  window.addEventListener('load', configureInputTypeControls);
+  window.addEventListener('load', function() {
+    configureInputTypeControls();
+    configureSpecialCharacters();
+    handleInputTypeChanged();
+  });
 
 })();

@@ -16,7 +16,7 @@
   <body>
     <audio preload="auto" src="synthesize_text?text=hey%20there"></audio>
     <div class="labeled-radio">
-      <input type="radio" name="input-type" value="IPA" id="ipa-input">
+      <input type="radio" name="input-type" value="IPA" id="ipa-input-type">
       <label>IPA</label>
     </div>
     <div class="labeled-radio">
@@ -24,6 +24,8 @@
       <label>Text</label>
     </div>
     <br>
+    <div id="ipa-input" style="display: none"></div>
+    <br id="ipa-input-break" style="display: none">
     <textarea id="text-input"></textarea>
     <br>
     <button id="synthesize-button">Synthesize</button>
