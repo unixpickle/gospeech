@@ -281,9 +281,8 @@ func (l LateralLiquid) EncodeBeginning(system VocalSystem, lastPhone, nextPhone 
 	}
 	system.Turbulence().AdjustVolume(0, time.Millisecond*50)
 	system.ConsonantVoice().AdjustVolume(0, time.Millisecond*50)
-	system.Liquid().AdjustVolume(0.3, time.Millisecond*100)
+	system.Liquid().AdjustVolume(0.3, time.Millisecond*50)
 	system.EvenOut()
-	system.Continue(time.Millisecond * 100)
 }
 
 func (l LateralLiquid) FormantPull(end FormantState) FormantState {
