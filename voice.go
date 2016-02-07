@@ -10,7 +10,7 @@ type Voice struct {
 	Phones map[string]Phone
 }
 
-func (v Voice) Synthesize(ipaString string, phoneRate float64) wav.Sound {
+func (v Voice) Synthesize(ipaString string) wav.Sound {
 	vocalSystem := NewVocalSystem()
 
 	words := [][]Phone{}

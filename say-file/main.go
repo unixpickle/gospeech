@@ -43,7 +43,7 @@ func main() {
 		phonetics = dict.TranslateToIPA(string(input))
 	}
 
-	synthesized := gospeech.DefaultVoice.Synthesize(phonetics, 6)
+	synthesized := gospeech.DefaultVoice.Synthesize(phonetics)
 	wav.WriteFile(synthesized, "output.wav")
 	fmt.Println("Saved output.wav")
 }
