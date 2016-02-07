@@ -112,19 +112,19 @@ func (t TrackSet) EvenOut() {
 	}
 }
 
-// Volume returns the average volume of the tracks in this set.
-func (t TrackSet) Volume() float64 {
-	var sum float64
+// Volume returns the sum of the volumes in all the tracks.
+func (t TrackSet) Volume() (sum float64) {
 	for _, track := range t {
 		sum += track.Volume()
 	}
-	return sum / float64(len(t))
+	return
 }
 
-// AdjustVolume elongates all of the tracks while simultaneously
-// adjusting their volumes to the given value.
+// AdjustVolume elongates all of the tracks while simultaneously adjusting their volumes.
+// All the volumes will be set equally such that the sum of all the volumes is newVolume.
 func (t TrackSet) AdjustVolume(newVolume float64, duration time.Duration) {
+	vol := newVolume / float64(len(t))
 	for _, track := range t {
-		track.AdjustVolume(newVolume, duration)
+		track.AdjustVolume(vol, duration)
 	}
 }
