@@ -34,15 +34,19 @@ func NewVocalSystem() VocalSystem {
 		},
 		"Turbulence": tracks.TrackSet{
 			"S":  tracks.NewToneTrack(5000, 0, 1000),
-			"SH": tracks.NewToneTrack(4700, 0, 1000),
-			"TH": tracks.NewToneTrack(3500, 0, 1000),
-			"P":  tracks.NewToneTrack(400, 0, 400),
+			"SH": tracks.NewToneTrack(3500, 0, 2000),
+			"TH": tracks.TrackSet{
+				"1": tracks.NewToneTrack(500, 0, 300),
+				"2": tracks.NewToneTrack(4000, 0, 700),
+			},
+			"P": tracks.NewToneTrack(400, 0, 400),
 			"F": tracks.TrackSet{
 				"1": tracks.NewToneTrack(2000, 0, 200),
 			},
 			"K": tracks.TrackSet{
-				"1": tracks.NewToneTrack(2500, 0, 1000),
-				"2": tracks.NewToneTrack(3500, 0, 1000),
+				"F1": tracks.NewToneTrack(600, 0, 200),
+				"F2": tracks.NewToneTrack(500, 0, 500),
+				"F3": tracks.NewToneTrack(800, 0, 500),
 			},
 			"H": tracks.TrackSet{
 				"F1": tracks.NewToneTrack(1000, 0, 500),
