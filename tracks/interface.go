@@ -97,9 +97,15 @@ func (t TrackSet) Continue(duration time.Duration) {
 
 // EvenOut continues every track as much as necessary to bring it
 // in line with the longest track in the set.
+//
+// This is recursive with other TrackSets.
+// TrackSets that belong to this TrackSet will be evened out as well.
 func (t TrackSet) EvenOut() {
 	dur := t.Duration()
 	for _, track := range t {
+		if ts, ok := track.(TrackSet); ok {
+			ts.EvenOut()
+		}
 		if track.Duration() < dur {
 			track.Continue(dur - track.Duration())
 		}
