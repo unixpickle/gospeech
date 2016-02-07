@@ -31,11 +31,7 @@ func (v Voice) Synthesize(ipaString string, phoneRate float64) wav.Sound {
 		words = append(words, word)
 	}
 
-	for i, word := range words {
-		if i != 0 {
-			vocalSystem.AdjustVolume(0, time.Millisecond*50)
-			vocalSystem.Continue(time.Millisecond * 300)
-		}
+	for _, word := range words {
 		for i, phone := range word {
 			var lastPhone, nextPhone Phone
 			if i > 0 {
@@ -46,6 +42,8 @@ func (v Voice) Synthesize(ipaString string, phoneRate float64) wav.Sound {
 			}
 			phone.EncodeBeginning(vocalSystem, lastPhone, nextPhone)
 		}
+		vocalSystem.AdjustVolume(0, time.Millisecond*50)
+		vocalSystem.Continue(time.Millisecond * 300)
 	}
 
 	s := wav.NewPCM8Sound(1, 44100)
