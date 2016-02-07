@@ -101,5 +101,5 @@ func (v VocalSystem) ConsonantVoice() tracks.Track {
 
 // Liquid returns the track that corresponds to the "L" sound.
 func (v VocalSystem) Liquid() tracks.Track {
-	return v.TrackSet[tracks.TrackID("ConsonantVoice")]
+	return v.TrackSet[tracks.TrackID("Liquid")]
 }
