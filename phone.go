@@ -192,9 +192,9 @@ func (n Nasal) EncodeBeginning(system VocalSystem, lastPhone, nextPhone Phone) {
 	system.ConsonantVoice().AdjustVolume(0, time.Millisecond*50)
 	system.Liquid().AdjustVolume(0, time.Millisecond*50)
 
-	system.AdjustFormants(n.Formants, time.Millisecond*100)
+	system.AdjustFormants(n.Formants, time.Millisecond*50)
 	system.EvenOut()
-	system.Continue(time.Millisecond * 50)
+	system.Continue(time.Millisecond * 100)
 }
 
 func (n Nasal) FormantPull(end FormantState) FormantState {
@@ -216,7 +216,7 @@ func (n Nasal) FormantPull(end FormantState) FormantState {
 }
 
 func (v Nasal) TransitionTime() time.Duration {
-	return time.Millisecond * 50
+	return time.Millisecond * 20
 }
 
 // A Fricative represents any consonant which is characterized by turbulent airflow.
