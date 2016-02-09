@@ -57,7 +57,7 @@
   function setInputEnabled(flag) {
     var ids = ['synthesize-button', 'text-input'];
     for (var i = 0, len = ids.length; i < len; ++i) {
-      document.getElementById(ids[i]).enabled = flag;
+      document.getElementById(ids[i]).disabled = !flag;
     }
   }
 
