@@ -35,6 +35,20 @@ func (s *SawtoothParameters) Copy() *SawtoothParameters {
 	return res
 }
 
+// Equal returns true if the sets of parameters are equal.
+func (s *SawtoothParameters) Equals(s1 *SawtoothParameters) bool {
+	if len(s.Formants) != len(s1.Formants) || s.Strength != s1.Strength ||
+		s.Volume != s1.Volume {
+		return false
+	}
+	for i, x := range s.Formants {
+		if s1.Formants[i] != x {
+			return false
+		}
+	}
+	return true
+}
+
 // powerForFrequency returns a number between 0 and 1 indicating how much of a given frequency
 // should be included in the wave, based on the frequency's distance from the nearest formant.
 func (s *SawtoothParameters) powerForFrequency(freq float64) float64 {
@@ -116,6 +130,22 @@ func (s *SawtoothTrack) Encode(sampleRate int) []wav.Sample {
 	return res
 }
 
+// Continue elongates this track using the current parameters.
+func (s *SawtoothTrack) Continue(d time.Duration) {
+	if lastPart := s.lastPart(); lastPart.static() {
+		lastPart.duration += d
+		return
+	}
+
+	params := s.Parameters()
+	part := &sawtoothTrackPart{
+		duration: d,
+		start:    params,
+		end:      params,
+	}
+	s.parts = append(s.parts, part)
+}
+
 // Volume returns the volume of the current parameters.
 func (s *SawtoothTrack) Volume() float64 {
 	return s.lastPart().end.Volume
@@ -162,6 +192,10 @@ type sawtoothTrackPart struct {
 	duration time.Duration
 	start    *SawtoothParameters
 	end      *SawtoothParameters
+}
+
+func (s *sawtoothTrackPart) static() bool {
+	return s.end.Equals(s.start)
 }
 
 func (s *sawtoothTrackPart) parametersAtTime(out *SawtoothParameters, t time.Duration) {
