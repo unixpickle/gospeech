@@ -11,31 +11,27 @@ const sawtoothHarmonicCount = 50
 
 // A SawtoothParameters represents an instantaneous state of a SawtoothTrack.
 type SawtoothParameters struct {
-	Volume     float64
-	Formants   []float64
-	Amplitudes []float64
-	Strength   float64
+	Volume   float64
+	Formants []float64
+	Strength float64
 }
 
 // NewSawtoothParameters generates a SawtoothParameters filled in with zero values, but with non-nil
 // slices.
 func NewSawtoothParameters(formantCount int) *SawtoothParameters {
 	return &SawtoothParameters{
-		Formants:   make([]float64, formantCount),
-		Amplitudes: make([]float64, formantCount),
+		Formants: make([]float64, formantCount),
 	}
 }
 
 // Copy generates a deep copy of the receiver.
 func (s *SawtoothParameters) Copy() *SawtoothParameters {
 	res := &SawtoothParameters{
-		Volume:     s.Volume,
-		Formants:   make([]float64, len(s.Formants)),
-		Amplitudes: make([]float64, len(s.Amplitudes)),
-		Strength:   s.Strength,
+		Volume:   s.Volume,
+		Formants: make([]float64, len(s.Formants)),
+		Strength: s.Strength,
 	}
 	copy(res.Formants, s.Formants)
-	copy(res.Amplitudes, s.Amplitudes)
 	return res
 }
 
@@ -98,7 +94,7 @@ func (s *SawtoothTrack) Encode(sampleRate int) []wav.Sample {
 	var partIndex int
 
 	res := []wav.Sample{}
-	tempParameters := NewSawtoothParameters(len(s.lastPart().end.Amplitudes))
+	tempParameters := NewSawtoothParameters(len(s.lastPart().end.Formants))
 	for {
 		secondsElapsed := float64(len(res)) / float64(sampleRate)
 		currentTime := time.Duration(float64(time.Second) * secondsElapsed)
@@ -172,8 +168,7 @@ func (s *sawtoothTrackPart) parametersAtTime(out *SawtoothParameters, t time.Dur
 	fracDone := float64(t) / float64(s.duration)
 	out.Volume = fracDone*s.end.Volume + (1-fracDone)*s.start.Volume
 	out.Strength = fracDone*s.end.Strength + (1-fracDone)*s.start.Strength
-	for i := range out.Amplitudes {
-		out.Amplitudes[i] = fracDone*s.end.Amplitudes[i] + (1-fracDone)*s.start.Amplitudes[i]
+	for i := range out.Formants {
 		out.Formants[i] = fracDone*s.end.Formants[i] + (1-fracDone)*s.start.Formants[i]
 	}
 }
