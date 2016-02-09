@@ -6,6 +6,8 @@ import (
 	"github.com/unixpickle/gospeech/tracks"
 )
 
+const formantSawtoothStrength = 0.03
+
 // FormantState represents an instantaneous state of three formants.
 type FormantState struct {
 	Frequencies [3]float64
@@ -27,11 +29,7 @@ type VocalSystem struct {
 // NewVocalSystem creates a VocalSystem that is currently silent.
 func NewVocalSystem() VocalSystem {
 	return VocalSystem{tracks.TrackSet{
-		"Formants": tracks.TrackSet{
-			"F1": tracks.NewToneTrack(400, 0, 0),
-			"F2": tracks.NewToneTrack(1000, 0, 0),
-			"F3": tracks.NewToneTrack(2000, 0, 0),
-		},
+		"Formants": tracks.NewSawtoothTrack(100, 3),
 		"Turbulence": tracks.TrackSet{
 			"S":  tracks.NewToneTrack(5000, 0, 1000),
 			"SH": tracks.NewToneTrack(3500, 0, 2000),
@@ -63,35 +61,38 @@ func NewVocalSystem() VocalSystem {
 }
 
 // FormantsTrack returns the track corresponding to the formants as a whole.
-func (v VocalSystem) FormantsTrack() tracks.TrackSet {
-	return v.TrackSet[tracks.TrackID("Formants")].(tracks.TrackSet)
+func (v VocalSystem) FormantsTrack() tracks.Track {
+	return v.TrackSet[tracks.TrackID("Formants")]
 }
 
 // Formants returns the current formant state.
 func (v VocalSystem) Formants() FormantState {
-	freqs := map[string]float64{}
-	volumes := map[string]float64{}
-	for name, track := range v.FormantsTrack() {
-		tone := track.(*tracks.ToneTrack)
-		freqs[string(name)] = tone.Frequency()
-		volumes[string(name)] = tone.Volume()
-	}
+	sawtooth := v.FormantsTrack().(*tracks.SawtoothTrack)
+	params := sawtooth.Parameters()
 	return FormantState{
-		Frequencies: [3]float64{freqs["F1"], freqs["F2"], freqs["F3"]},
-		Volumes:     [3]float64{volumes["F1"], volumes["F2"], volumes["F3"]},
+		Frequencies: [3]float64{params.Formants[0], params.Formants[1], params.Formants[2]},
+		Volumes:     [3]float64{params.Volume / 3, params.Volume / 3, params.Volume / 3},
 	}
 }
 
 // AdjustFormants adjusts the formant state over a period of time.
 func (v VocalSystem) AdjustFormants(state FormantState, d time.Duration) {
-	freqs := map[string]float64{"F1": state.Frequencies[0], "F2": state.Frequencies[1],
-		"F3": state.Frequencies[2]}
-	volumes := map[string]float64{"F1": state.Volumes[0], "F2": state.Volumes[1],
-		"F3": state.Volumes[2]}
-	for name, track := range v.FormantsTrack() {
-		n := string(name)
-		track.(*tracks.ToneTrack).AdjustAll(freqs[n], volumes[n], 0, d)
+	// TODO: either consider the volumes individually here, or change the FormantState to reflect
+	// that all the formants have one collective amplitude.
+	var totalVolume float64
+	for _, v := range state.Volumes[:] {
+		totalVolume += v
 	}
+
+	sawtooth := v.FormantsTrack().(*tracks.SawtoothTrack)
+	params := tracks.NewSawtoothParameters(3)
+	params.Strength = formantSawtoothStrength
+	params.Volume = totalVolume * 10
+	for i, freq := range state.Frequencies[:] {
+		params.Formants[i] = freq
+	}
+
+	sawtooth.AdjustParameters(params, d)
 }
 
 // Turbulence returns the set of track that correspond to different kinds of turbulent airflow,
